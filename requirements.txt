@@ -1,0 +1,7 @@
+numpy
+matplotlib
+plotly
+mpmath
+fractions
+math
+matplotlib
