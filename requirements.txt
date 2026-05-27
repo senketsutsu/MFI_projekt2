@@ -1,7 +1,5 @@
 numpy
+pandas
 matplotlib
 plotly
-mpmath
-fractions
-math
-matplotlib
+ipykernel
