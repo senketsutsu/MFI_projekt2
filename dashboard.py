@@ -312,11 +312,14 @@ def main():
     col3.metric("Liczba punktów", len(x))
     col4.metric("Parametry θ", len(result["theta"]))
 
-    tab_fit, tab_anim, tab_loss, tab_exp = st.tabs(
+
+
+    tab_fit, tab_anim, tab_loss, tab_theta, tab_exp = st.tabs(
         [
             "Dopasowanie",
             "Animacja uczenia",
             "Historia straty",
+            "Parametry",
             "Eksperymenty",
         ]
     )
@@ -338,6 +341,16 @@ def main():
             ),
             width="stretch",
         )
+
+    with tab_theta:
+        st.subheader("Oszacowane parametry modelu")
+
+        theta_df = pd.DataFrame({
+            "Parametr": [f"θ{i}" for i in range(len(result["theta"]))],
+            "Wartość": result["theta"]
+        })
+
+        st.dataframe(theta_df, use_container_width=True, hide_index=True)
 
     with tab_exp:
         st.markdown(
