@@ -80,6 +80,161 @@ def plot_fit(x, y, y_pred, dataset: str, degree: int):
     )
     return fig
 
+def plot_training_animation(x, y, y_pred_history, dataset):
+    order = np.argsort(x)
+
+    step = max(1, len(y_pred_history) // 100)
+
+    sampled_iterations = list(range(0, len(y_pred_history), step))
+
+    frames = []
+
+    for i in sampled_iterations:
+        frames.append(
+            go.Frame(
+                name=str(i),
+                data=[
+                    go.Scatter(
+                        x=x[order],
+                        y=y[order],
+                        mode="markers",
+                        name="Dane rzeczywiste",
+                        marker=dict(size=5, opacity=0.5),
+                    ),
+                    go.Scatter(
+                        x=x[order],
+                        y=y_pred_history[i][order],
+                        mode="lines",
+                        name="Predykcja modelu",
+                        line=dict(width=3),
+                    ),
+                ],
+            )
+        )
+
+    fig = go.Figure(
+        data=[
+            go.Scatter(
+                x=x[order],
+                y=y[order],
+                mode="markers",
+                name="Dane rzeczywiste",
+                marker=dict(size=5, opacity=0.5),
+            ),
+            go.Scatter(
+                x=x[order],
+                y=y_pred_history[0][order],
+                mode="lines",
+                name="Predykcja modelu",
+            ),
+        ],
+        frames=frames,
+    )
+
+    slider_steps = []
+
+    for i in sampled_iterations:
+        slider_steps.append(
+            {
+                "args": [
+                    [str(i)],
+                    {
+                        "frame": {
+                            "duration": 0,
+                            "redraw": True,
+                        },
+                        "mode": "immediate",
+                        "transition": {
+                            "duration": 0,
+                        },
+                    },
+                ],
+                "label": str(i),
+                "method": "animate",
+            }
+        )
+
+    fig.update_layout(
+        title=f"Proces uczenia modelu – {dataset}",
+        xaxis_title="x",
+        yaxis_title="y",
+        height=600,
+        showlegend=True,
+        updatemenus=[
+            {
+                "buttons": [
+                    {
+                        "args": [
+                            None,
+                            {
+                                "frame": {
+                                    "duration": 80,
+                                    "redraw": True,
+                                },
+                                "fromcurrent": True,
+                                "transition": {
+                                    "duration": 50,
+                                },
+                            },
+                        ],
+                        "label": "▶",
+                        "method": "animate",
+                    },
+                    {
+                        "args": [
+                            [None],
+                            {
+                                "frame": {
+                                    "duration": 0,
+                                    "redraw": False,
+                                },
+                                "mode": "immediate",
+                                "transition": {
+                                    "duration": 0,
+                                },
+                            },
+                        ],
+                        "label": "⏸",
+                        "method": "animate",
+                    },
+                ],
+                "direction": "left",
+                "pad": {"r": 10, "t": 50},
+                "showactive": False,
+                "type": "buttons",
+                "x": 0.1,
+                "xanchor": "right",
+                "y": 0,
+                "yanchor": "top",
+            }
+        ],
+        sliders=[
+            {
+                "active": 0,
+                "yanchor": "top",
+                "xanchor": "left",
+                "currentvalue": {
+                    "font": {"size": 18},
+                    "prefix": "Iteracja: ",
+                    "visible": True,
+                    "xanchor": "right",
+                },
+                "transition": {
+                    "duration": 50,
+                },
+                "pad": {
+                    "b": 10,
+                    "t": 50,
+                },
+                "len": 0.85,
+                "x": 0.1,
+                "y": 0,
+                "steps": slider_steps,
+            }
+        ],
+    )
+
+    return fig
 
 def plot_loss_history(loss_history):
     fig = px.line(
@@ -157,13 +312,32 @@ def main():
     col3.metric("Liczba punktów", len(x))
     col4.metric("Parametry θ", len(result["theta"]))
 
-    tab_fit, tab_loss, tab_exp = st.tabs(["Dopasowanie", "Historia straty", "Eksperymenty"])
+    tab_fit, tab_anim, tab_loss, tab_exp = st.tabs(
+        [
+            "Dopasowanie",
+            "Animacja uczenia",
+            "Historia straty",
+            "Eksperymenty",
+        ]
+    )
 
     with tab_fit:
         st.plotly_chart(plot_fit(x, y, result["y_pred"], dataset, degree), use_container_width=True)
 
     with tab_loss:
         st.plotly_chart(plot_loss_history(result["loss_history"]), use_container_width=True)
+
+    with tab_anim:
+
+        st.plotly_chart(
+            plot_training_animation(
+                x,
+                y,
+                result["y_pred_history"],
+                dataset,
+            ),
+            width="stretch",
+        )
 
     with tab_exp:
         st.markdown(

@@ -47,16 +47,18 @@ def gradient_descent(
 ):
     theta = np.zeros(X.shape[1])
     loss_history = []
+    theta_history = []
 
     for i in range(iterations):
         theta -= learning_rate * compute_gradient(X, y, theta)
         loss = compute_loss(X, y, theta)
         loss_history.append(loss)
+        theta_history.append(theta.copy())
 
         if i > 0 and abs(loss_history[-2] - loss_history[-1]) < tolerance:
             break
 
-    return theta, loss_history
+    return theta, loss_history, theta_history
 
 
 def fit_polynomial_regression(x, y, degree, learning_rate=0.0001, iterations=100_000, tolerance=1e-9):
@@ -64,16 +66,21 @@ def fit_polynomial_regression(x, y, degree, learning_rate=0.0001, iterations=100
     X = create_polynomial_features(x_normalized, degree)
 
     with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
-        theta, loss_history = gradient_descent(
+        theta, loss_history, theta_history = gradient_descent(
             X, y, learning_rate=learning_rate, iterations=iterations, tolerance=tolerance
         )
 
     y_pred = predict(X, theta)
     final_loss = compute_loss(X, y, theta)
 
+    y_pred_history = []
+    for theta_iter in theta_history:
+        y_pred_history.append(X @ theta_iter)
+
     return {
         "theta": theta,
         "y_pred": y_pred,
+        "y_pred_history": y_pred_history,
         "loss_history": loss_history,
         "final_loss": final_loss,
         "iterations": len(loss_history),
